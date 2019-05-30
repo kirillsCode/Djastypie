@@ -15,15 +15,11 @@ Including another URLconf
 """
 from django.contrib import admin
 from django.urls import path, include
-from auth_api.api import EntryResource, UserResource
-from tastypie.api import Api
+from auth_api.urls import v1_api
 
-v1_api = Api(api_name='v1')
-# v1_api.register(UserResource())
-v1_api.register(EntryResource())
 
 urlpatterns = [
     path('admin/', admin.site.urls),
-    # path(r'^login/$', include('auth_api.urls')),
     path('api/', include(v1_api.urls)),
+    path('accounts/', include('django.contrib.auth.urls')),
 ]

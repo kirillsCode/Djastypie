@@ -1,3 +1,7 @@
-from django.urls import path, include
 from .api import EntryResource
+from tastypie.api import Api
+
+
+v1_api = Api(api_name='v1')
+v1_api.register(EntryResource())
 

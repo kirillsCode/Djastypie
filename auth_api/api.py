@@ -61,10 +61,9 @@ class EntryResource(ModelResource):
     user = fields.ForeignKey(UserResource, 'user')
 
     class Meta:
-        _query = "Select * from auth_api_entry where show=true"
-        queryset = Entry.objects.raw(_query)
+        queryset = Entry.objects.filter(show=1)
         resource_name = 'entry'
         allowed_methods = ['get']
-        authentication = _BasicAuthentication()
+        authentication = BasicAuthentication()
         authorization = UserObjectsOnlyAuthorization()
 
