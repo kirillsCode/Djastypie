@@ -122,4 +122,4 @@ USE_TZ = True
 
 STATIC_URL = '/static/'
 
-LOGIN_REDIRECT_URL = '/api/v1/entry/?format=xml'
+LOGIN_REDIRECT_URL = '/'

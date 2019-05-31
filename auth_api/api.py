@@ -2,7 +2,7 @@ from tastypie.resources import ModelResource
 from .models import Entry
 from django.contrib.auth.models import User
 from tastypie import fields
-from tastypie.authentication import BasicAuthentication
+from tastypie.authentication import BasicAuthentication, Authentication
 from tastypie.authorization import Authorization
 from tastypie.exceptions import Unauthorized
 
@@ -51,11 +51,21 @@ class _BasicAuthentication(BasicAuthentication):
         return response
 
 
+class DjangoAutentication(Authentication):
+    def is_authenticated(self, request, **kwargs):
+        if request.user.is_authenticated:
+            return True
+        return False
+
+    def get_identifier(self, request):
+        return request.user.username
+
+
 class UserResource(ModelResource):
     class Meta:
         queryset = User.objects.all()
         resource_name = 'user'
-
+        authentication = BasicAuthentication()
 
 class EntryResource(ModelResource):
     user = fields.ForeignKey(UserResource, 'user')
@@ -64,6 +74,13 @@ class EntryResource(ModelResource):
         queryset = Entry.objects.filter(show=1)
         resource_name = 'entry'
         allowed_methods = ['get']
-        authentication = BasicAuthentication()
+        fields = ['title', 'create_date', 'id']
+
+        # Some options here:
+        # - if a user is not logged in, then suggest logging in with BasicAuthentication
+        #   (so use MultipleAuthentication here)
+        # - if a user is not logged in, redirect to login page
+        # - leave as it is now
+        authentication = DjangoAutentication()
         authorization = UserObjectsOnlyAuthorization()
 
