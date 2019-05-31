@@ -1,34 +1,53 @@
 from django.test import TestCase
+from unittest import skip
 from auth_api.models import Entry, User
 from django.utils import timezone
 from tastypie.test import ResourceTestCaseMixin
 
-# testing models
-class EntryTest(TestCase):
 
-    def create_user(self, username="test_user", password="rootroot"):
-        return User.objects.create(username=username, password=password)
+# testing models and api
+class EntryTest(ResourceTestCaseMixin, TestCase):
 
-    def create_entry(self, title="this is test"):
-        user = self.create_user()
-        return Entry.objects.create(title=title, user=user, create_date=timezone.now())
+    def setUp(self):
+        super(EntryTest, self).setUp()
+        self.title = "this is a test"
+        self.number_of_entries = 1
+        self.username = 'root'
+        self.password = 'pass'
+        self.user = User.objects.create_user(username=self.username,
+                                             password=self.password)
+        self.entry = Entry.objects.create(title=self.title,
+                                          user=self.user,
+                                          create_date=timezone.now())
 
-    def test_entry_creation(self):
-        e = self.create_entry()
-        self.assertTrue(isinstance(e, Entry))
-        self.assertEqual(e.__str__(), e.title)
+    def get_credentials(self):
+        return self.create_basic(username=self.username, password=self.password)
 
+    def tearDown(self):
+        pass
 
-# testing api
+    def test_entry_validation(self):
+        self.assertTrue(isinstance(self.entry, Entry))
+        self.assertEqual(self.entry.__str__(), self.entry.title)
 
+    def test_entry_get(self):
+        result = str(Entry.objects.get(pk=1))
+        self.assertEqual(self.title, result)
 
-class EntryResourceTest(ResourceTestCaseMixin, TestCase):
+    @skip("WIP")
+    def test_entry_update(self):
+        Entry.objects.filter(show=0).update(show=1)
 
     def test_get_api_json(self):
-        resp = self.api_client.get('/api/v1/entry/', format='json')
+        resp = self.api_client.get('/api/v1/entry/', format='json',
+                                   authentication=self.get_credentials())
         self.assertValidJSONResponse(resp)
 
     def test_get_api_xml(self):
-        resp = self.api_client.get('/api/v1/entry/', format='xml')
+        resp = self.api_client.get('/api/v1/entry/', format='xml',
+                                   authentication=self.get_credentials())
         self.assertValidXMLResponse(resp)
+
+    def test_get_api_unauthenticated(self):
+        self.assertHttpUnauthorized(self.api_client.get('/api/v1/entry/'))
 
