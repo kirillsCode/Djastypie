@@ -3,6 +3,7 @@ from unittest import skip
 from auth_api.models import Entry, User
 from django.utils import timezone
 from tastypie.test import ResourceTestCaseMixin
+from django.http.cookie import SimpleCookie
 
 
 # testing models and api
@@ -39,8 +40,10 @@ class EntryTest(ResourceTestCaseMixin, TestCase):
         Entry.objects.filter(show=0).update(show=1)
 
     def test_get_api_json(self):
+        self.api_client.cookies = SimpleCookie({
+            'sessionid': 'go4d6wt6rpx28n3ut1e53r6olgsie3xo|ZTE3M2RhMzA2OGRmODY1Y2I0ZGQ3NDliODkzYmUwNTkyZGZmNzY0YTp7Il9hdXRoX3VzZXJfaWQiOiIyIiwiX2F1dGhfdXNlcl9iYWNrZW5kIjoiZGphbmdvLmNvbnRyaWIuYXV0aC5iYWNrZW5kcy5Nb2RlbEJhY2tlbmQiLCJfYXV0aF91c2VyX2hhc2giOiJjYmMwMGRlZDc1Y2UyNTU0MjI4NTJhNzJjNDRkZmY3NjIxZmU3Mjg5In0='})
         resp = self.api_client.get('/api/v1/entry/', format='json',
-                                   authentication=self.get_credentials())
+                                   )
         self.assertValidJSONResponse(resp)
 
     def test_get_api_xml(self):

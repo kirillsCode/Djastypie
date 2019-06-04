@@ -16,28 +16,7 @@ class UserObjectsOnlyAuthorization(Authorization):
         # Is the requested object owned by the user?
         return bundle.obj.user == bundle.request.user
 
-    def create_list(self, object_list, bundle):
-        # Assuming they're auto-assigned to ``user``.
-        return object_list
-
-    def create_detail(self, object_list, bundle):
-        return bundle.obj.user == bundle.request.user
-
-    def update_list(self, object_list, bundle):
-        allowed = []
-
-        # Since they may not all be saved, iterate over them.
-        for obj in object_list:
-            if obj.user == bundle.request.user:
-                allowed.append(obj)
-
-        return allowed
-
-    def update_detail(self, object_list, bundle):
-        return bundle.obj.user == bundle.request.user
-
     def delete_list(self, object_list, bundle):
-        # Sorry user, no deletes for you!
         raise Unauthorized("Sorry, no deletes.")
 
     def delete_detail(self, object_list, bundle):
@@ -61,11 +40,27 @@ class DjangoAutentication(Authentication):
         return request.user.username
 
 
+class CookieAuthentication(BasicAuthentication):
+    def __init__(self, *args, **kwargs):
+        super(CookieAuthentication, self).__init__(*args, **kwargs)
+
+    def is_authenticated(self, request, **kwargs):
+        from django.contrib.sessions.models import Session
+        if 'sessionid' in request.COOKIES:
+            s = Session.objects.get(pk=request.COOKIES['sessionid'])
+            if '_auth_user_id' in s.get_decoded():
+                u = User.objects.get(id=s.get_decoded()['_auth_user_id'])
+                if request.user == u:
+                    return True
+        return super(CookieAuthentication, self).is_authenticated(request, **kwargs)
+
+
 class UserResource(ModelResource):
     class Meta:
         queryset = User.objects.all()
         resource_name = 'user'
         authentication = BasicAuthentication()
+
 
 class EntryResource(ModelResource):
     user = fields.ForeignKey(UserResource, 'user')
@@ -81,6 +76,6 @@ class EntryResource(ModelResource):
         #   (so use MultipleAuthentication here)
         # - if a user is not logged in, redirect to login page
         # - leave as it is now
-        authentication = DjangoAutentication()
+        authentication = CookieAuthentication()
         authorization = UserObjectsOnlyAuthorization()
 

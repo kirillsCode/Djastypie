@@ -13,7 +13,7 @@ class Entry(models.Model):
     # or
     # - just use 'auto_now_add=True'
     # but the option I used allows to edit the entry without editing this field
-    create_date = models.DateField(editable=False)
+    create_date = models.DateField()
     show = models.BooleanField(default=False)
     user = models.ForeignKey(User, models.CASCADE, related_name="entry_id")
 
